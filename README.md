@@ -21,7 +21,7 @@ cd shiyong-resource-library
 python3 -m http.server 8000
 ```
 
-然后访问 http://localhost:8000。页面通过网络加载 Supabase 客户端并读取已发布资源，因此需要联网。
+然后访问 [http://localhost:8000](http://localhost:8000)。页面通过网络加载 Supabase 客户端并读取已发布资源，因此需要联网。
 
 前端默认使用当前项目的 Supabase 配置。自行部署时，请在 `index.html` 的 `SUPABASE_CONFIG` 中使用自己的项目 URL 和公开的 publishable/anon key；不要将 `service_role` 或其他秘密密钥放进前端或公开仓库。数据库脚本与部署、安全说明分别见 [`shiyong-supabase-schema.sql`](shiyong-supabase-schema.sql) 和 [`shiyong-backend-contract.md`](shiyong-backend-contract.md)。这些文件不会自动部署，后端契约中的投稿和反馈接口不代表当前网站已开放站内投稿或反馈。
 
