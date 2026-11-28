@@ -1,0 +1,940 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light" />
+<link rel="icon" href="data:," />
+<title>测一测你适合哪座城市</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --blue:#1677ff; --blue-dark:#0b4fc2; --blue-deep:#083a8a;
+    --sky1:#7ec8ff; --sky2:#dff1ff; --ink:#12263f; --muted:#5b718c;
+    --card:#ffffff; --line:#dcebfb; --soft:#eef6ff; --accent:#ffb020;
+    --radius:18px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:"Noto Sans SC",-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    color:var(--ink); background:#eaf4ff; line-height:1.6;
+  }
+  button{font-family:inherit; cursor:pointer; min-height:44px;}
+  .wrap{max-width:520px; margin:0 auto; min-height:100dvh; background:#fff; box-shadow:0 0 40px rgba(11,79,194,.12); position:relative; overflow-x:hidden;}
+  /* ---------- sky header ---------- */
+  .sky{
+    background:linear-gradient(180deg,#3d9bff 0%,#7ec8ff 55%,#cfeaff 100%);
+    padding:34px 22px 0; position:relative; overflow:hidden; color:#fff;
+  }
+  .sky::before,.sky::after{
+    content:""; position:absolute; background:rgba(255,255,255,.85); border-radius:999px;
+  }
+  .sky::before{width:110px;height:30px; top:26px; right:-20px; box-shadow:-46px 10px 0 -6px rgba(255,255,255,.7);}
+  .sky::after{width:80px;height:22px; top:78px; left:-14px; box-shadow:34px 8px 0 -8px rgba(255,255,255,.6);}
+  .kicker{display:inline-block; background:rgba(255,255,255,.22); border:1px solid rgba(255,255,255,.5); color:#fff; font-size:13px; font-weight:700; letter-spacing:.14em; padding:5px 12px; border-radius:999px; position:relative; z-index:2;}
+  h1{font-size:40px; line-height:1.18; font-weight:900; margin:16px 0 10px; position:relative; z-index:2; text-shadow:0 2px 14px rgba(8,58,138,.25);}
+  h1 .hl{color:#fff; background:linear-gradient(transparent 62%, rgba(255,176,32,.85) 62%);}
+  .subtitle{font-size:16px; color:#eaf5ff; margin:0 0 18px; position:relative; z-index:2; font-weight:500;}
+  .skyline{display:block; width:100%; height:92px; margin-top:6px; position:relative; z-index:1;}
+  .body{padding:22px 20px 34px; background:linear-gradient(180deg,#f4faff, #ffffff 220px);}
+  .cta{
+    width:100%; border:none; border-radius:999px; background:linear-gradient(90deg,#0b6cff,#2f9bff);
+    color:#fff; font-size:19px; font-weight:900; padding:15px 20px; box-shadow:0 10px 24px rgba(22,119,255,.35);
+    display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+  .cta:active{transform:scale(.985);}
+  .cta-note{text-align:center; color:var(--muted); font-size:13px; margin:12px 0 0;}
+  .dim-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:22px;}
+  .dim-card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:16px 14px 14px; box-shadow:0 4px 14px rgba(18,38,63,.05);}
+  .dim-icon{width:46px;height:46px;border-radius:14px; display:flex;align-items:center;justify-content:center; margin-bottom:10px;}
+  .dim-icon svg{width:26px;height:26px;}
+  .dim-card h3{margin:0 0 4px; font-size:16px; font-weight:900;}
+  .dim-card p{margin:0; font-size:13px; color:var(--muted); line-height:1.55;}
+  .how{margin-top:22px; background:var(--soft); border-radius:var(--radius); padding:16px;}
+  .how h3{margin:0 0 8px; font-size:15px;}
+  .how ol{margin:0; padding-left:20px; color:var(--muted); font-size:14px;}
+  .how li{margin:3px 0;}
+  .count-line{text-align:center; font-size:13px; color:var(--muted); margin-top:18px;}
+  .count-line b{color:var(--blue); font-size:15px;}
+  /* ---------- 验证码门 ---------- */
+  .gate-body{padding:26px 20px 40px; background:linear-gradient(180deg,#f4faff, #ffffff 220px);}
+  .gate-card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 20px 22px; box-shadow:0 6px 20px rgba(18,38,63,.07);}
+  .gate-card h2{margin:0 0 6px; font-size:20px; font-weight:900; text-align:center;}
+  .gate-card .gate-tip{margin:0 0 18px; text-align:center; color:var(--muted); font-size:14px;}
+  .gate-input{
+    width:100%; border:2px solid var(--line); border-radius:16px; background:#fff;
+    font-size:26px; font-weight:900; letter-spacing:.45em; text-align:center; color:var(--ink);
+    padding:14px 10px 14px calc(10px + .45em); outline:none; font-family:inherit;
+    transition:border-color .15s;
+  }
+  .gate-input:focus{border-color:var(--blue);}
+  .gate-input.error{border-color:#e5484d;}
+  .gate-error{min-height:24px; margin:8px 0 4px; text-align:center; color:#e5484d; font-size:14px; font-weight:700;}
+  .gate-btn{margin-top:6px;}
+  .gate-note{text-align:center; color:var(--muted); font-size:13px; margin:16px 0 0;}
+  @keyframes gate-shake{0%,100%{transform:translateX(0);} 20%{transform:translateX(-7px);} 40%{transform:translateX(7px);} 60%{transform:translateX(-5px);} 80%{transform:translateX(5px);}}
+  .gate-card.shake{animation:gate-shake .4s ease;}
+  /* ---------- quiz ---------- */
+  .hidden{display:none !important;}
+  .quiz-top{padding:20px 20px 0;}
+  .quiz-meta{display:flex; justify-content:space-between; align-items:center; font-size:14px; color:var(--muted); font-weight:700;}
+  .quiz-meta .dim-tag{color:var(--blue-dark); background:var(--soft); border:1px solid var(--line); padding:4px 10px; border-radius:999px; font-size:13px;}
+  .progress{height:10px; background:#e3eefb; border-radius:999px; overflow:hidden; margin:12px 0 6px;}
+  .progress-bar{height:100%; width:0%; background:linear-gradient(90deg,#0b6cff,#39b6ff); border-radius:999px; transition:width .35s ease;}
+  .q-card{padding:14px 20px 30px;}
+  .q-title{font-size:22px; font-weight:900; line-height:1.45; margin:14px 0 6px;}
+  .q-hint{color:var(--muted); font-size:14px; margin:0 0 18px;}
+  .opts{display:flex; flex-direction:column; gap:12px;}
+  .opt{
+    text-align:left; width:100%; border:2px solid var(--line); background:#fff; border-radius:16px;
+    padding:15px 16px; font-size:16px; font-weight:500; color:var(--ink); display:flex; gap:12px; align-items:flex-start;
+    transition:border-color .15s, background .15s;
+  }
+  .opt .letter{flex:0 0 auto; width:28px;height:28px;border-radius:50%; background:var(--soft); color:var(--blue-dark); font-weight:900; display:flex;align-items:center;justify-content:center; font-size:14px; margin-top:1px;}
+  .opt:active,.opt.selected{border-color:var(--blue); background:#f2f8ff;}
+  .opt.selected .letter{background:var(--blue); color:#fff;}
+  .quiz-nav{display:flex; gap:10px; margin-top:20px;}
+  .btn-ghost{flex:0 0 auto; border:1.5px solid var(--line); background:#fff; color:var(--muted); border-radius:999px; padding:10px 18px; font-size:15px; font-weight:700;}
+  /* ---------- result ---------- */
+  .result-sky{background:linear-gradient(180deg,#3d9bff,#7ec8ff 60%,#dff1ff); padding:28px 22px 0; color:#fff; text-align:center; position:relative; overflow:hidden;}
+  .result-sky .label{font-size:14px; letter-spacing:.2em; font-weight:700; opacity:.95;}
+  .result-city{font-size:56px; font-weight:900; line-height:1.1; margin:8px 0 4px; text-shadow:0 3px 16px rgba(8,58,138,.3);}
+  .match-ring{margin:10px auto 4px; width:118px; height:118px; position:relative;}
+  .match-ring svg{transform:rotate(-90deg);}
+  .match-num{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;}
+  .match-num b{font-size:32px; line-height:1; color:var(--blue-deep);}
+  .match-num span{font-size:12px; color:var(--muted); font-weight:700; margin-top:3px;}
+  .result-tagline{font-size:16px; font-weight:700; color:var(--blue-deep); margin:6px 22px 0; text-align:center;}
+  .section{padding:0 20px;}
+  .section h3{font-size:17px; font-weight:900; margin:24px 0 10px; display:flex; align-items:center; gap:8px;}
+  .section h3::before{content:""; width:5px; height:18px; border-radius:3px; background:var(--blue);}
+  .reason{background:#f7fbff; border:1px solid var(--line); border-radius:14px; padding:13px 15px; font-size:15px; margin-bottom:10px;}
+  .reason b{color:var(--blue-dark);}
+  .tags{display:flex; flex-wrap:wrap; gap:8px;}
+  .tag{background:#fff7e8; border:1px solid #ffe1a3; color:#8a5a00; font-size:13px; font-weight:700; padding:6px 12px; border-radius:999px;}
+  .bars{background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px 15px;}
+  .bar-row{display:grid; grid-template-columns:74px 1fr 30px; align-items:center; gap:10px; font-size:13px; margin:8px 0;}
+  .bar-track{height:8px; background:#e8f1fc; border-radius:99px; overflow:hidden;}
+  .bar-fill{height:100%; background:linear-gradient(90deg,#0b6cff,#39b6ff); border-radius:99px;}
+  .top3{display:flex; flex-direction:column; gap:10px;}
+  .top-item{display:flex; align-items:center; gap:12px; border:1px solid var(--line); border-radius:14px; padding:12px 14px; background:#fff;}
+  .top-item .rank{width:30px;height:30px;border-radius:50%; background:var(--soft); color:var(--blue-dark); font-weight:900; display:flex;align-items:center;justify-content:center; flex:0 0 auto;}
+  .top-item.first{border-color:var(--blue); background:#f2f8ff;}
+  .top-item .nm{font-weight:900; font-size:16px;}
+  .top-item .ds{font-size:13px; color:var(--muted);}
+  .top-item .pc{margin-left:auto; font-weight:900; color:var(--blue); font-size:17px; flex:0 0 auto;}
+  .restart{width:100%; margin:26px 0 8px;}
+  .foot-note{text-align:center; color:var(--muted); font-size:12px; padding:0 20px 30px;}
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important;} }
+  @media (min-width:700px){ h1{font-size:46px;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ===== 验证码 ===== -->
+  <section id="screen-gate">
+    <div class="sky">
+      <span class="kicker">城市匹配测试</span>
+      <h1>测一测<br /><span class="hl">你适合哪座城市</span></h1>
+      <p class="subtitle">输入验证码，即可开始测试</p>
+      <svg class="skyline" viewBox="0 0 520 92" preserveAspectRatio="none" aria-hidden="true">
+        <path fill="#ffffff" opacity="0.95" d="M0,92 L0,64 L26,64 L26,44 L44,44 L44,58 L62,58 L62,30 L70,18 L78,30 L78,92 Z M92,92 L92,52 L122,52 L122,36 L132,36 L132,52 L150,52 L150,92 Z M164,92 L164,40 L176,40 L176,24 L186,24 L186,40 L200,40 L200,92 Z M214,92 L214,56 L244,56 L244,22 L254,10 L264,22 L264,56 L282,56 L282,92 Z M296,92 L296,48 L326,48 L326,62 L344,62 L344,92 Z M358,92 L358,34 L372,34 L372,20 L382,20 L382,34 L396,34 L396,92 Z M410,92 L410,54 L436,54 L436,42 L448,42 L448,92 Z M462,92 L462,60 L520,60 L520,92 Z"/>
+        <circle cx="470" cy="18" r="11" fill="#fff3c4"/>
+      </svg>
+    </div>
+    <div class="gate-body">
+      <div class="gate-card" id="gate-card">
+        <h2>请输入验证码</h2>
+        <p class="gate-tip">验证码在购买后的发货消息里</p>
+        <input class="gate-input" id="gate-input" type="text" inputmode="numeric" autocomplete="off" maxlength="4" placeholder="····" aria-label="验证码" />
+        <p class="gate-error" id="gate-error" role="alert"></p>
+        <button class="cta gate-btn" id="btn-verify" type="button">验证并开始</button>
+      </div>
+      <p class="gate-note">共 30 道题 · 298 座城市 · 约 4 分钟测完</p>
+    </div>
+  </section>
+
+  <!-- ===== 首页 ===== -->
+  <section id="screen-home" class="hidden">
+    <div class="sky">
+      <span class="kicker">城市匹配测试</span>
+      <h1>测一测<br /><span class="hl">你适合哪座城市</span></h1>
+      <p class="subtitle">从你的性格与生活偏好，匹配更适合你的城市</p>
+      <svg class="skyline" viewBox="0 0 520 92" preserveAspectRatio="none" aria-hidden="true">
+        <path fill="#ffffff" opacity="0.95" d="M0,92 L0,64 L26,64 L26,44 L44,44 L44,58 L62,58 L62,30 L70,18 L78,30 L78,92 Z M92,92 L92,52 L122,52 L122,36 L132,36 L132,52 L150,52 L150,92 Z M164,92 L164,40 L176,40 L176,24 L186,24 L186,40 L200,40 L200,92 Z M214,92 L214,56 L244,56 L244,22 L254,10 L264,22 L264,56 L282,56 L282,92 Z M296,92 L296,48 L326,48 L326,62 L344,62 L344,92 Z M358,92 L358,34 L372,34 L372,20 L382,20 L382,34 L396,34 L396,92 Z M410,92 L410,54 L436,54 L436,42 L448,42 L448,92 Z M462,92 L462,60 L520,60 L520,92 Z"/>
+        <circle cx="470" cy="18" r="11" fill="#fff3c4"/>
+      </svg>
+    </div>
+    <div class="body">
+      <button class="cta" id="btn-start" type="button">开始测试 <span aria-hidden="true">→</span></button>
+      <p class="cta-note">共 30 道题 · 约 4 分钟 · 凭第一感觉选就好</p>
+
+      <div class="dim-grid">
+        <div class="dim-card">
+          <div class="dim-icon" style="background:#e8f3ff;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#1677ff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c1 1.2 2.2 1.8 3.5 1.8s2.5-.6 3.5-1.8"/><circle cx="9" cy="9.5" r=".6" fill="#1677ff"/><circle cx="15" cy="9.5" r=".6" fill="#1677ff"/></svg>
+          </div>
+          <h3>性格倾向</h3>
+          <p>看你更适合热闹还是松弛，找到和你同频的人群氛围。</p>
+        </div>
+        <div class="dim-card">
+          <div class="dim-icon" style="background:#e6fbf3;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#0aa06e" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2.5h6"/></svg>
+          </div>
+          <h3>生活节奏</h3>
+          <p>快一点，还是慢一点？匹配你能舒服生活的城市速度。</p>
+        </div>
+        <div class="dim-card">
+          <div class="dim-icon" style="background:#fff4e0;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#e08a00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/><path d="M14 4l5-2-1 5"/></svg>
+          </div>
+          <h3>发展机会</h3>
+          <p>机会、空间与成长感，看看哪座城市更托得住你的目标。</p>
+        </div>
+        <div class="dim-card">
+          <div class="dim-icon" style="background:#f0eaff;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#7a4fd0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V9l5-4v16M10 21V5l6 3v13M16 21V11l3 2v8"/><path d="M7.5 12h.01M7.5 15h.01M13 10h.01M13 13h.01M13 16h.01"/></svg>
+          </div>
+          <h3>城市气质</h3>
+          <p>繁华现代、历史烟火还是山海自然，找到气质对味的城市。</p>
+        </div>
+      </div>
+
+      <div class="how">
+        <h3>测试怎么算？</h3>
+        <ol>
+          <li>回答 30 道题，每题对应一个维度</li>
+          <li>系统算出你的四维画像</li>
+          <li>与全国城市逐一比对，给出最匹配的前三名</li>
+        </ol>
+      </div>
+      <p class="count-line">题库已收录 <b>298</b> 座中国城市 · 结果仅供娱乐参考</p>
+    </div>
+  </section>
+
+  <!-- ===== 答题页 ===== -->
+  <section id="screen-quiz" class="hidden">
+    <div class="quiz-top">
+      <div class="quiz-meta">
+        <span id="q-count">第 1 / 30 题</span>
+        <span class="dim-tag" id="q-dim">性格倾向</span>
+      </div>
+      <div class="progress"><div class="progress-bar" id="q-bar"></div></div>
+    </div>
+    <div class="q-card">
+      <h2 class="q-title" id="q-title"></h2>
+      <p class="q-hint">选最像你的那一个，没有对错。</p>
+      <div class="opts" id="q-opts"></div>
+      <div class="quiz-nav">
+        <button class="btn-ghost hidden" id="btn-back" type="button">← 上一题</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 结果页 ===== -->
+  <section id="screen-result" class="hidden">
+    <div class="result-sky">
+      <div class="label">你 的 命 定 城 市</div>
+      <div class="result-city" id="r-city">—</div>
+      <svg class="skyline" viewBox="0 0 520 92" preserveAspectRatio="none" aria-hidden="true" style="height:64px;">
+        <path fill="#ffffff" opacity="0.9" d="M0,92 L0,64 L26,64 L26,44 L44,44 L44,58 L62,58 L62,30 L70,18 L78,30 L78,92 Z M92,92 L92,52 L122,52 L122,36 L132,36 L132,52 L150,52 L150,92 Z M164,92 L164,40 L176,40 L176,24 L186,24 L186,40 L200,40 L200,92 Z M214,92 L214,56 L244,56 L244,22 L254,10 L264,22 L264,56 L282,56 L282,92 Z M296,92 L296,48 L326,48 L326,62 L344,62 L344,92 Z M358,92 L358,34 L372,34 L372,20 L382,20 L382,34 L396,34 L396,92 Z M410,92 L410,54 L436,54 L436,42 L448,42 L448,92 Z M462,92 L462,60 L520,60 L520,92 Z"/>
+      </svg>
+    </div>
+
+    <div class="match-ring" aria-label="匹配度">
+      <svg width="118" height="118" viewBox="0 0 118 118">
+        <circle cx="59" cy="59" r="50" fill="none" stroke="#e3eefb" stroke-width="10"/>
+        <circle id="ring-fill" cx="59" cy="59" r="50" fill="none" stroke="#1677ff" stroke-width="10" stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="314"/>
+      </svg>
+      <div class="match-num"><b id="r-pct">—</b><span>匹配度</span></div>
+    </div>
+    <p class="result-tagline" id="r-tagline"></p>
+
+    <div class="section">
+      <h3>为什么是它</h3>
+      <div id="r-reasons"></div>
+      <h3>城市亮点</h3>
+      <p id="r-desc" style="margin:0 0 12px; font-size:15px;"></p>
+      <div class="tags" id="r-tags"></div>
+      <h3>你的四维画像</h3>
+      <div class="bars" id="r-bars"></div>
+      <h3>最适合你的前三名</h3>
+      <div class="top3" id="r-top3"></div>
+      <button class="cta restart" id="btn-restart" type="button">重新测试</button>
+    </div>
+    <p class="foot-note">结果由你的 30 道题答案与全国城市的四维画像比对得出，仅供娱乐与灵感参考。</p>
+  </section>
+
+</div>
+
+<script>
+/* ============ 维度：0 性格倾向 1 生活节奏 2 发展机会 3 城市气质 ============ */
+var DIM_NAMES = ["性格倾向","生活节奏","发展机会","城市气质"];
+
+/* ============ 30 道题 ============ */
+var QUESTIONS = [
+  { dim:0, q:"周末你更想怎么过？", opts:[
+    {t:"热闹聚会，和朋友吃喝玩乐", v:9},
+    {t:"逛逛市集、看个展，人多但不吵", v:6},
+    {t:"找个咖啡馆，安安静静坐一下午", v:3},
+    {t:"一个人在家，或者去公园发呆", v:1}
+  ]},
+  { dim:1, q:"你理想的工作节奏是？", opts:[
+    {t:"快节奏高效率，忙起来才有劲", v:9},
+    {t:"张弛有度，忙完能准时下班", v:6},
+    {t:"慢工出细活，不喜欢被人催", v:3},
+    {t:"越慢越好，每天都很松弛", v:1}
+  ]},
+  { dim:2, q:"选城市时，你最看重什么？", opts:[
+    {t:"行业机会多，能往上冲一冲", v:10},
+    {t:"有发展空间，生活成本别太高", v:7},
+    {t:"工作稳定，压力别太大", v:4},
+    {t:"赚钱够花就行，安稳最重要", v:2}
+  ]},
+  { dim:3, q:"你喜欢什么样的城市氛围？", opts:[
+    {t:"繁华现代，高楼霓虹很有活力", v:9},
+    {t:"新旧交融，既现代又有烟火气", v:6},
+    {t:"历史感强，有老街和故事", v:4},
+    {t:"靠山靠海，自然风光最治愈", v:2}
+  ]},
+  { dim:0, q:"朋友眼中的你，更像哪一种？", opts:[
+    {t:"社牛本牛，走到哪都能聊起来", v:10},
+    {t:"熟了很能聊，生人面前慢热", v:6},
+    {t:"安静靠谱，不爱凑热闹", v:3},
+    {t:"独行侠一个，享受独处", v:1}
+  ]},
+  { dim:1, q:"你对生活便利度的要求是？", opts:[
+    {t:"便利第一，地铁外卖越快越好", v:9},
+    {t:"便利重要，但别太拥挤", v:6},
+    {t:"慢一点没关系，环境舒服更重要", v:3},
+    {t:"宁愿住得偏一点，清净最重要", v:1}
+  ]},
+  { dim:2, q:"未来三年，你的小目标是？", opts:[
+    {t:"升职加薪 / 搞事业，狠狠往前冲", v:10},
+    {t:"学新技能，让收入再涨一截", v:7},
+    {t:"工作生活平衡，稳步向前", v:5},
+    {t:"先过好日子，事业随缘", v:2}
+  ]},
+  { dim:3, q:"哪种画面最戳你？", opts:[
+    {t:"夜晚的市中心灯火和车水马龙", v:10},
+    {t:"老城小巷里，早餐摊冒着热气", v:5},
+    {t:"海边日落，骑着车吹吹风", v:2},
+    {t:"山间小城，云雾里飘着茶香", v:1}
+  ]},
+  { dim:0, q:"你的社交充电方式是？", opts:[
+    {t:"人越多越兴奋，热闹就是能量", v:9},
+    {t:"三五好友小聚，最舒服", v:6},
+    {t:"一对一深聊，更自在", v:3},
+    {t:"独处才能满血复活", v:1}
+  ]},
+  { dim:1, q:"你更向往哪种城市尺度？", opts:[
+    {t:"超大城市，热闹繁华机会多", v:9},
+    {t:"大城市，但生活别太赶", v:6},
+    {t:"中等城市，刚刚好的烟火气", v:4},
+    {t:"小城慢生活，安逸自在", v:1}
+  ]},
+  { dim:2, q:"选工作时，你更看重哪一点？", opts:[
+    {t:"大平台大机会，成长空间大", v:10},
+    {t:"行业前景好，收入上限高", v:7},
+    {t:"稳定有保障，不用太折腾", v:4},
+    {t:"轻松不内卷，开心最重要", v:2}
+  ]},
+  { dim:3, q:"休息日你更想去哪儿逛逛？", opts:[
+    {t:"繁华商圈和新地标，越潮越好", v:9},
+    {t:"老城街巷，有故事的地方", v:5},
+    {t:"江边湖边，吹吹风散散步", v:3},
+    {t:"山野古镇，暂时逃离城市", v:1}
+  ]},
+  { dim:0, q:"到了一个新环境，你通常会？", opts:[
+    {t:"主动认识新朋友，很快就混熟", v:10},
+    {t:"先观察一阵，慢慢融入", v:6},
+    {t:"等别人来找我，不太主动", v:3},
+    {t:"自己待着也挺好，不用刻意社交", v:1}
+  ]},
+  { dim:1, q:"你理想中的一天是怎么安排的？", opts:[
+    {t:"安排得满满当当，效率拉满", v:9},
+    {t:"有计划，也留点空闲发呆", v:6},
+    {t:"随缘，想干嘛就干嘛", v:3},
+    {t:"越闲越好，能躺着绝不坐着", v:1}
+  ]},
+  { dim:2, q:"如果有机会去大城市闯一闯，你会？", opts:[
+    {t:"立刻去，机会不等人", v:10},
+    {t:"先看看机会合不合适再决定", v:7},
+    {t:"有点心动，但怕压力太大", v:4},
+    {t:"不去，现在的城市过得挺好", v:2}
+  ]},
+  { dim:0, q:"朋友聚会时，你通常是哪个角色？", opts:[
+    {t:"气氛担当，负责热场和张罗", v:10},
+    {t:"跟着大家一起玩，很合群", v:6},
+    {t:"安静旁观，偶尔插两句", v:3},
+    {t:"能不去就不去，自己待着舒服", v:1}
+  ]},
+  { dim:2, q:"对买房这件事，你的态度是？", opts:[
+    {t:"房价高没关系，收入涨得快更重要", v:10},
+    {t:"希望房价别太高，努力几年能买得起", v:7},
+    {t:"有个安稳的住处就行，不追求地段", v:4},
+    {t:"租房也挺好，低成本生活最轻松", v:2}
+  ]},
+  { dim:3, q:"你更想住在城市的哪个位置？", opts:[
+    {t:"市中心，摩天楼和商圈环绕", v:9},
+    {t:"新老交界的街区，方便又有味道", v:6},
+    {t:"老城区，老房子老街道有故事", v:4},
+    {t:"近郊山水边，推开窗就是风景", v:2}
+  ]},
+  { dim:1, q:"你能接受的通勤时间是？", opts:[
+    {t:"越短越好，时间就是效率", v:9},
+    {t:"45 分钟以内都可以接受", v:6},
+    {t:"慢一点没事，路上正好放空", v:3},
+    {t:"最好步行可达，拒绝每天奔波", v:1}
+  ]},
+  { dim:0, q:"热闹的网红店要排长队，你会？", opts:[
+    {t:"排！热闹和氛围感最重要", v:9},
+    {t:"看情况，不太久就排一下", v:6},
+    {t:"有点犹豫，人多就劝退我了", v:3},
+    {t:"直接避开，我喜欢清净的地方", v:1}
+  ]},
+  { dim:2, q:"如果有机会换一座城市发展，你会？", opts:[
+    {t:"随时愿意，哪里机会大去哪里", v:10},
+    {t:"有明确的好机会就会去", v:7},
+    {t:"看离家远不远、成本高不高再说", v:4},
+    {t:"不想折腾，扎根一座城挺好", v:2}
+  ]},
+  { dim:3, q:"出去旅行，你更爱哪种目的地？", opts:[
+    {t:"大都市，地标夜景都要打卡", v:9},
+    {t:"文艺小城，慢慢逛慢慢拍", v:6},
+    {t:"古镇古村，老建筑里找故事", v:4},
+    {t:"山野海岛，亲近大自然", v:2}
+  ]},
+  { dim:0, q:"你的社交软件状态更像哪种？", opts:[
+    {t:"经常发动态，和大家热烈互动", v:9},
+    {t:"偶尔分享生活，点赞评论都随意", v:6},
+    {t:"只看不发，安静潜水", v:3},
+    {t:"基本不用，现实里见面就够了", v:1}
+  ]},
+  { dim:2, q:"你更想进入哪种行业？", opts:[
+    {t:"新兴风口行业，机会和上限都高", v:10},
+    {t:"热门行业，发展快收入不错", v:7},
+    {t:"传统行业，成熟稳定有保障", v:4},
+    {t:"节奏慢的行业，不卷最重要", v:2}
+  ]},
+  { dim:3, q:"哪种天气和风景最让你想定居？", opts:[
+    {t:"天气不重要，城市够现代就行", v:9},
+    {t:"四季分明，新老街区都有的城市", v:6},
+    {t:"古城韵味，青砖老墙慢慢逛", v:4},
+    {t:"靠山靠水，空气清新能看星星", v:1}
+  ]},
+  { dim:1, q:"你希望城市的夜晚是什么样的？", opts:[
+    {t:"灯火通明，夜生活丰富才过瘾", v:9},
+    {t:"十点前还热闹，之后慢慢安静", v:6},
+    {t:"早早安静下来，适合休息", v:3},
+    {t:"越安静越好，能睡个好觉", v:1}
+  ]},
+  { dim:0, q:"选住处时，你更看重哪一点？", opts:[
+    {t:"热闹繁华，出门就是吃喝玩乐", v:9},
+    {t:"成熟社区，生活气息浓", v:6},
+    {t:"安静小区，邻里简单不打扰", v:3},
+    {t:"偏一点没关系，清净最重要", v:1}
+  ]},
+  { dim:2, q:"对自己创业这件事，你怎么想？", opts:[
+    {t:"很想闯一闯，机会来了就上", v:10},
+    {t:"有合适的机会可以试试", v:7},
+    {t:"看别人闯就好，自己求稳", v:4},
+    {t:"完全不想，安稳上班最踏实", v:2}
+  ]},
+  { dim:3, q:"一座城市的历史感，对你来说？", opts:[
+    {t:"越新越现代越好，老旧反而扣分", v:9},
+    {t:"新旧都有最好，各有各的味道", v:6},
+    {t:"老建筑越多越有魅力", v:4},
+    {t:"最好原生态，少一点人工痕迹", v:1}
+  ]},
+  { dim:1, q:"你的做事风格更像哪一种？", opts:[
+    {t:"雷厉风行，想到就立刻去做", v:9},
+    {t:"按部就班，有计划地推进", v:6},
+    {t:"不急不躁，慢慢来比较快", v:3},
+    {t:"随缘佛系，开心最重要", v:1}
+  ]}
+];
+
+/* ============ 298 座城市：[名称, 性格, 节奏, 机会, 气质, 特点] ============ */
+var CITIES = [
+["北京",8,9,10,9,"首都气场，资源顶配，历史与现代交汇"],
+["上海",7,9,10,10,"国际都市，精致高效，海派腔调拉满"],
+["广州",8,8,8,7,"千年商都，务实包容，早茶里藏着烟火气"],
+["深圳",7,10,10,10,"年轻快跑，创新之城，来了就是深圳人"],
+["成都",8,4,7,5,"巴适安逸，美食之都，慢生活天花板"],
+["杭州",6,7,8,8,"西湖诗意加数字经济，宜居又能打"],
+["武汉",8,8,7,6,"九省通衢，江湖气足，热干面配大江大湖"],
+["西安",6,5,6,3,"十三朝古都，厚重历史，碳水快乐城"],
+["南京",6,6,7,5,"六朝古都，梧桐大道，温润有底蕴"],
+["重庆",9,7,7,7,"山城魔幻，火锅江湖，热情似火"],
+["苏州",5,5,7,7,"园林水乡，精致温婉，经济实力强劲"],
+["长沙",9,6,7,6,"娱乐之都，夜生活王者，茶颜配小龙虾"],
+["青岛",6,5,6,6,"红瓦绿树碧海蓝天，啤酒海鲜慢时光"],
+["大连",5,5,6,7,"北方明珠，海滨浪漫，干净舒展"],
+["厦门",5,4,6,6,"海上花园，文艺清新，鼓浪屿的慢调子"],
+["昆明",5,3,5,3,"春城无冬，四季花开，松弛感拉满"],
+["天津",7,6,7,6,"相声之都，幽默松弛，洋楼与烟火并存"],
+["郑州",7,7,7,6,"中原枢纽，交通四通八达，实在过日子"],
+["沈阳",7,6,6,5,"东北老铁，豪爽热情，老工业底子厚"],
+["宁波",6,6,8,7,"港口强城，低调富裕，海鲜与书香兼备"],
+["福州",5,5,6,5,"有福之州，榕城温润，慢热宜居"],
+["济南",6,5,6,4,"泉城济南，老城泉水，踏实厚道"],
+["哈尔滨",7,4,5,5,"冰城浪漫，异域风情，冬天自带滤镜"],
+["长春",6,4,5,5,"汽车城加电影城，宽马路慢节奏"],
+["石家庄",6,6,6,5,"朴实枢纽，离京津近，生活成本友好"],
+["合肥",6,7,7,7,"科教新秀，发展势头猛，低调进取"],
+["太原",6,5,5,4,"龙城晋商，面食之都，厚重踏实"],
+["南宁",6,4,5,4,"绿城南宁，老友粉香，边境风情浓"],
+["南昌",7,6,6,5,"英雄城，赣江之畔，红色与江湖并存"],
+["贵阳",6,4,5,3,"爽爽贵阳，避暑胜地，山地慢生活"],
+["兰州",6,5,5,3,"黄河穿城，一碗面走天下，西北豪情"],
+["乌鲁木齐",7,5,5,5,"亚心之都，辽阔大气，瓜果飘香"],
+["呼和浩特",6,4,5,4,"青城草原风，辽阔舒展，奶香浓郁"],
+["海口",5,3,5,4,"椰城海口，热带慢调，骑楼老街"],
+["三亚",5,2,4,3,"热带海岛，度假天堂，每天都是夏天"],
+["珠海",5,4,6,7,"百岛之市，浪漫干净，宜居天花板"],
+["佛山",7,6,7,5,"功夫之城，制造业强，岭南烟火浓"],
+["东莞",7,7,8,7,"世界工厂进阶版，年轻务实，松山湖很美"],
+["无锡",5,5,7,7,"太湖明珠，富庶精致，工商名城"],
+["常州",5,5,6,6,"龙城常州，安稳富足，新能源势头强"],
+["徐州",7,6,6,5,"五省通衢，豪爽大气，烧烤江湖"],
+["温州",8,7,8,6,"商行天下，敢闯敢拼，海鲜与江心屿"],
+["嘉兴",5,4,6,6,"红船启航地，水乡富庶，离沪杭都近"],
+["金华",6,5,6,5,"义乌小商品之都，火腿香，商机多"],
+["台州",6,5,6,5,"山海水城，糯叽叽天堂，民营活力足"],
+["绍兴",5,4,6,4,"水乡酒乡，黄酒鲁迅，温婉书卷气"],
+["泉州",7,5,6,4,"半城烟火半城仙，海丝起点，闽南人情浓"],
+["漳州",5,4,5,3,"花果之城，慢悠悠，土楼与海交汇"],
+["烟台",5,4,5,5,"仙境海岸，葡萄酒城，海风清爽"],
+["潍坊",6,5,5,5,"风筝之都，踏实宜居，寿光蔬菜香"],
+["临沂",7,6,6,5,"商贸物流强，沂蒙情怀，煎饼卷大葱"],
+["唐山",6,5,5,5,"凤凰之城，工业底蕴，离京津很近"],
+["保定",6,5,5,4,"京畿门户，驴肉火烧，古城慢调"],
+["洛阳",5,4,5,3,"千年帝都，牡丹花城，汤文化暖心"],
+["南阳",6,5,5,4,"医圣故里，盆地小城，安稳厚重"],
+["许昌",5,5,5,5,"三国故地，胖东来出圈，宜居小城"],
+["宜昌",5,4,5,4,"三峡门户，江景宜人，宜居水电城"],
+["襄阳",6,5,5,4,"华夏第一城池，江湖侠气，牛肉面香"],
+["岳阳",6,4,5,3,"洞庭湖畔，岳阳楼下，江湖气息浓"],
+["常德",5,4,5,4,"桃花源里，米粉飘香，安逸小城"],
+["衡阳",6,5,5,4,"南岳衡山下，湘南枢纽，鱼粉一绝"],
+["株洲",6,5,6,5,"火车拉来的城市，工业强，湘江风光好"],
+["柳州",7,5,5,5,"螺蛳粉宇宙中心，工业与山水兼备"],
+["桂林",4,3,4,2,"山水甲天下，漓江如画，诗意栖居"],
+["惠州",5,4,6,6,"半城山色半城湖，临深宜居，西湖之美"],
+["中山",5,5,6,6,"伟人故里，灯都古镇，安稳富庶"],
+["江门",5,4,5,4,"侨乡碉楼，慢节奏，温泉海鲜齐全"],
+["湛江",6,4,4,3,"南海之滨，海鲜天堂，雷州风情浓"],
+["汕头",7,5,5,4,"潮汕美食之都，牛肉丸工夫茶，人情味浓"],
+["揭阳",6,4,4,4,"潮汕小城，玉都之名，生活气息浓"],
+["绵阳",5,5,6,5,"科技城，涪江之畔，安稳有实力"],
+["德阳",5,5,5,5,"重装之都，三星堆旁，踏实宜居"],
+["南充",6,5,5,4,"嘉陵江畔，丝绸之乡，川北烟火"],
+["宜宾",6,5,5,4,"长江首城，五粮飘香，江边慢生活"],
+["泸州",6,4,5,4,"酒城泸州，长江之滨，老窖香浓"],
+["遵义",6,4,5,3,"红色之城，山地酒香，羊肉粉一绝"],
+["曲靖",5,4,4,3,"滇东门户，高原小城，清凉宜居"],
+["大理",4,2,3,2,"风花雪月，苍山洱海，旅居天花板"],
+["西宁",5,4,4,3,"夏都西宁，高原清凉，面片炕锅香"],
+["银川",5,4,5,4,"塞上江南，贺兰山下，枸杞滩羊鲜"],
+["拉萨",4,3,3,2,"日光之城，雪域高原，信仰与蓝天"],
+["丽江",5,3,3,2,"古城慢时光，玉龙雪山下，浪漫治愈"],
+["扬州",5,3,5,4,"烟花三月下扬州，早茶园林，慢生活标杆"],
+["镇江",5,4,5,4,"江河交汇，锅盖面香，小城精致"],
+["泰州",5,4,5,5,"水城慢生活，医药之城，安稳富足"],
+["盐城",5,4,5,5,"湿地之都，丹顶鹤家园，开阔舒展"],
+["淮安",5,4,5,4,"运河之都，龙虾之乡，伟人故里"],
+["连云港",5,4,5,5,"山海之城，港口新秀，花果山旁"],
+["芜湖",6,5,6,6,"江城芜湖，长江之畔，年轻有活力"],
+["蚌埠",6,5,5,5,"淮畔珠城，烟火实在，生活成本友好"],
+["阜阳",6,5,5,4,"人口大市，皖北枢纽，格拉条香"],
+["安庆",5,4,4,4,"黄梅戏乡，长江小城，文气十足"],
+["赣州",6,5,5,4,"江南宋城，客家摇篮，橙香赣南"],
+["九江",5,4,5,4,"庐山脚下，长江之滨，江湖小城"],
+["上饶",5,4,4,3,"三清山婺源，山水田园，慢调江西"],
+["宜春",5,3,4,3,"月亮之都，温泉明月山，养生小城"],
+["包头",6,5,5,5,"鹿城草原钢城，辽阔大气，烧麦香"],
+["鄂尔多斯",5,5,5,5,"草原新城，地广人稀，羊绒暖天下"],
+["吉林",5,4,4,4,"雾凇之都，松花江畔，北国江城"],
+["鞍山",6,5,5,5,"钢都鞍山，千山秀美，踏实东北味"],
+["抚顺",5,4,4,4,"雷锋之城，浑河之畔，安静老城"],
+["齐齐哈尔",6,4,4,4,"鹤城扎龙，烧烤出圈，辽阔北疆"],
+["牡丹江",5,3,4,3,"镜泊湖畔，林海雪原，边境小城"],
+["佳木斯",5,3,4,4,"东极之城，迎接中国第一缕阳光"],
+["邯郸",6,5,5,4,"成语之都，三千年不改名，历史厚重"],
+["邢台",5,5,5,4,"太行泉城，朴实小城，生活气息浓"],
+["沧州",6,5,5,5,"武术杂技之乡，运河之畔，实在人"],
+["廊坊",6,6,6,6,"京津走廊，离北京近，发展借力强"],
+["开封",6,4,4,3,"八朝古都，菊花包子，夜市烟火旺"],
+["新乡",5,5,5,5,"牧野之城，太行脚下，安稳中原味"],
+["焦作",5,4,4,4,"云台山下，太极之乡，山水小城"],
+["咸阳",6,5,5,4,"秦都咸阳，离西安近，历史与烟火"],
+["宝鸡",5,4,5,4,"炎帝故里，青铜器之乡，面皮臊子面"],
+["渭南",5,4,4,4,"华山脚下，关中粮仓，朴实厚道"],
+["榆林",6,5,5,4,"塞上明珠，能源新城，大漠与黄土"],
+["汉中",5,3,4,3,"汉家发祥地，盆地小城，米皮热面皮"],
+["大同",5,4,4,3,"煤都转型，云冈石窟，刀削面之都"],
+["长治",5,4,4,4,"上党古城，太行山间，清凉宜居"],
+["运城",5,4,4,3,"关公故里，盐湖之城，晋南烟火"],
+["临汾",5,4,4,4,"尧都平阳，黄河壶口旁，牛肉丸子面"],
+["北海",5,3,4,3,"银滩天下，北部湾畔，海岛慢生活"],
+["防城港",4,3,4,3,"边海之城，安静小众，海鲜新鲜"],
+["日照",5,3,4,4,"东方太阳城，海滨日出，干净清爽"],
+["威海",4,3,5,5,"干净的海滨城，慢节奏，幸福感强"],
+["秦皇岛",5,3,4,4,"北戴河避暑，山海关长城，海滨慢城"],
+["张家口",5,4,5,4,"冬奥之城，草原天路，离京近空气好"],
+["承德",5,3,4,3,"避暑山庄，皇家园林，山水慢城"],
+["衡水",5,5,5,4,"衡水老白干，教育出名，衡水湖畔慢调"],
+["阳泉",5,4,4,4,"煤铁小城，娘子关旁，太行山里安稳过日子"],
+["晋中",5,4,5,4,"晋商故里，平遥古城，离太原很近"],
+["晋城",5,4,5,4,"太行山下，皇城相府，宜居小城"],
+["朔州",5,4,4,4,"塞上小城，应县木塔，辽阔安静"],
+["吕梁",6,4,4,3,"黄土高原，汾酒之乡，山里烟火"],
+["忻州",5,4,4,3,"五台山下，雁门关旁，清凉慢城"],
+["乌海",5,4,4,4,"黄河明珠，沙漠与湖之间的小城"],
+["赤峰",6,4,5,4,"红山文化，草原与农耕交汇，辽阔大气"],
+["通辽",6,4,5,4,"科尔沁草原，牛肉干香，马头琴悠扬"],
+["呼伦贝尔",5,3,4,2,"大草原之城，天高地阔，夏天最美"],
+["巴彦淖尔",5,4,4,3,"河套平原，塞上粮仓，瓜果飘香"],
+["乌兰察布",5,4,5,4,"草原之都，离京近，风电大数据新秀"],
+["本溪",5,4,4,3,"枫叶之都，本溪水洞，山城慢生活"],
+["丹东",5,3,4,3,"鸭绿江畔，边境小城，海鲜与江景"],
+["锦州",6,4,5,4,"辽西枢纽，烧烤出圈，海滨古城"],
+["营口",5,4,5,5,"辽河入海口，港口老城，海鲜新鲜"],
+["阜新",5,4,4,4,"玛瑙之都，转型小城，生活成本低"],
+["辽阳",5,4,4,4,"千年古城，白塔辽阳，安静老城"],
+["盘锦",5,4,5,3,"红海滩湿地，稻香蟹肥，石油小城"],
+["铁岭",6,4,4,4,"大城市铁岭，二人转幽默，东北烟火"],
+["朝阳",5,4,4,3,"三燕古都，化石之乡，辽西小城"],
+["葫芦岛",5,3,4,4,"关外第一市，海滨慢城，兴城古城"],
+["四平",6,4,4,4,"英雄之城，东北小城，实在烟火"],
+["辽源",5,4,4,4,"袜业之城，安静小城，生活气息浓"],
+["通化",5,4,4,3,"葡萄酒城，鸭绿江畔，山城慢调"],
+["白山",4,3,3,2,"长白山下，林海参乡，空气清新"],
+["松原",6,4,4,4,"查干湖畔，冬捕壮观，石油小城"],
+["白城",5,3,4,3,"鹤乡湿地，地广人稀，安静辽阔"],
+["鸡西",5,4,4,3,"兴凯湖畔，煤城转型，冷面一绝"],
+["鹤岗",5,3,3,4,"房价出圈的煤城，慢节奏低成本生活"],
+["双鸭山",5,3,4,4,"煤城小城，湿地环绕，安静过日子"],
+["大庆",6,5,5,5,"石油之城，百湖之畔，宽马路大气"],
+["伊春",4,2,3,2,"林都伊春，红松森林，天然氧吧"],
+["七台河",5,4,4,4,"短道速滑冠军之乡，煤城小城"],
+["黑河",5,3,4,3,"中俄边境，黑龙江畔，对岸就是俄罗斯"],
+["绥化",6,4,4,4,"寒地黑土，塞北江南，农业大市"],
+["南通",6,5,7,6,"江海之城，建筑之乡，临沪富庶宜居"],
+["宿迁",6,5,6,5,"项王故里，电商新秀，酒都洋河香"],
+["湖州",5,4,6,5,"太湖之畔，绿水青山，丝绸湖笔之乡"],
+["衢州",5,4,5,4,"南孔圣地，烂柯山下，辣味小城"],
+["舟山",5,3,5,3,"千岛之城，海鲜天堂，普陀山旁"],
+["丽水",4,3,4,2,"浙江绿谷，山水摄影天堂，慢调小城"],
+["淮南",6,5,5,4,"豆腐发源地，煤电之城，牛肉汤香"],
+["淮北",6,5,5,4,"运河故里，口子窖香，皖北小城"],
+["马鞍山",6,5,6,5,"诗城钢城，长江之畔，离南京很近"],
+["铜陵",5,4,5,5,"铜都铜陵，长江小城，安稳精致"],
+["黄山",4,3,4,2,"迎客松下，徽州古韵，山水画卷"],
+["滁州",5,4,5,4,"琅琊山下，醉翁亭旁，临宁新秀"],
+["宿州",6,5,5,4,"皖北枢纽，运河之畔，实在烟火"],
+["六安",5,4,5,3,"大别山下，瓜片茶香，红色老区"],
+["亳州",6,5,5,4,"药都亳州，老子故里，中药飘香"],
+["池州",4,3,4,3,"九华山下，杏花村旁，清净小城"],
+["宣城",5,4,5,4,"宣纸之乡，文房四宝，皖南山水"],
+["莆田",7,5,6,4,"妈祖故乡，鞋服之都，闽中烟火"],
+["三明",5,4,5,3,"沙县小吃发源地，山水小城，客家味浓"],
+["南平",4,3,4,2,"武夷山下，茶香竹海，闽北慢城"],
+["龙岩",6,4,5,3,"客家土楼，红色故土，闽西山城"],
+["宁德",5,4,6,5,"新能源新秀，山海之城，霞浦滩涂美"],
+["吉安",5,4,5,3,"井冈山下，庐陵文化，红色摇篮"],
+["抚州",5,4,5,4,"才子之乡，临川文化，慢调小城"],
+["萍乡",6,4,5,4,"武功山下，湘赣边界，辣味小城"],
+["新余",5,4,5,5,"仙女湖畔，钢铁小城，精致宜居"],
+["鹰潭",5,4,5,3,"龙虎山下，道教祖庭，铁路小城"],
+["景德镇",5,4,5,3,"千年瓷都，匠人聚集，文艺慢生活"],
+["淄博",7,5,6,5,"烧烤出圈，齐国故都，工业老城烟火旺"],
+["枣庄",6,4,5,4,"台儿庄旁，辣子鸡香，运河小城"],
+["东营",5,4,5,4,"黄河入海口，石油之城，地广人稀"],
+["济宁",6,5,5,4,"孔孟之乡，运河之都，文化厚重"],
+["泰安",5,4,5,3,"泰山脚下，登高祈福，旅游小城"],
+["德州",6,5,5,5,"扒鸡之乡，京沪枢纽，实在平原城"],
+["聊城",5,4,5,4,"江北水城，东昌湖畔，运河慢调"],
+["滨州",5,4,5,5,"渤海之滨，沾化冬枣，工业小城"],
+["菏泽",7,5,5,4,"牡丹之都，人口大市，电商新秀"],
+["平顶山",6,5,5,4,"煤城鹰城，汝瓷之乡，中原小城"],
+["安阳",5,4,5,3,"殷墟甲骨，七朝古都，文字之都"],
+["鹤壁",5,4,5,4,"诗经淇河，精致小城，安稳宜居"],
+["濮阳",6,5,5,4,"龙都濮阳，杂技之乡，中原小城"],
+["漯河",6,5,6,5,"食品名城，双汇之乡，沙澧河畔"],
+["三门峡",5,4,4,3,"黄河明珠，天鹅之城，峡谷小城"],
+["商丘",6,5,5,4,"三商之源，古城枢纽，人口大市"],
+["信阳",5,3,5,3,"毛尖茶香，北国江南，宜居茶都"],
+["周口",7,5,5,4,"人口大市，老子故里，平原烟火"],
+["驻马店",6,5,5,4,"天中之城，中原粮仓，实在小城"],
+["黄石",6,5,5,5,"矿冶之都，磁湖之畔，工业老城"],
+["十堰",5,4,5,3,"武当山下，汽车之城，山城慢调"],
+["鄂州",5,4,5,5,"梁子湖畔，临汉小城，花湖机场新秀"],
+["荆门",5,4,5,4,"荆楚门户，漳河之畔，安稳小城"],
+["孝感",6,5,5,5,"孝文化之乡，麻糖米酒，临汉宜居"],
+["荆州",6,4,5,3,"楚国故都，古城墙下，江汉平原烟火"],
+["黄冈",6,5,5,4,"黄冈中学出名，大别山下，教育之乡"],
+["咸宁",5,3,5,3,"桂花之乡，温泉之城，武汉后花园"],
+["随州",5,4,4,4,"编钟之乡，炎帝故里，安静小城"],
+["湘潭",6,5,6,5,"伟人故里，莲城湘潭，离长沙很近"],
+["邵阳",7,5,5,4,"湘中大市，米粉飘香，人口众多"],
+["张家界",4,3,4,2,"奇峰三千，玻璃桥旁，山水旅游城"],
+["益阳",5,4,5,4,"洞庭湖畔，黑茶之乡，银城慢调"],
+["郴州",5,4,5,3,"东江湖雾漫，粤港澳后花园，宜居小城"],
+["永州",5,4,4,3,"柳宗元笔下，潇湘之源，慢调小城"],
+["怀化",6,4,5,3,"五省通衢，湘西门户，山地枢纽"],
+["娄底",6,4,5,4,"湘中枢纽，钢铁小城，实在烟火"],
+["韶关",5,4,5,3,"丹霞山下，粤北门户，山水小城"],
+["河源",5,3,5,4,"万绿湖畔，客家之城，生态宜居"],
+["梅州",5,3,4,4,"世界客都，围龙屋里，慢调山城"],
+["汕尾",6,4,5,4,"海陆丰烟火，海滨小城，海鲜新鲜"],
+["阳江",5,3,5,4,"刀剪之都，海陵岛旁，海滨慢城"],
+["茂名",6,4,5,4,"荔枝之乡，石化之城，南海之滨"],
+["肇庆",5,3,5,4,"七星岩鼎湖山，岭南古城，山水宜居"],
+["清远",5,4,5,4,"清远鸡出名，北江之畔，广州后花园"],
+["潮州",6,4,5,4,"潮州古城，工夫茶牛肉丸，美食之都"],
+["云浮",5,3,4,4,"石材之都，西江之畔，安静小城"],
+["梧州",6,4,5,4,"骑楼老城，六堡茶香，粤语烟火"],
+["钦州",5,3,5,4,"北部湾畔，坭兴陶乡，海滨小城"],
+["贵港",6,4,5,4,"荷城贵港，西江之畔，新兴港口城"],
+["玉林",7,5,5,4,"岭南都会，药材之乡，烟火浓烈"],
+["百色",5,3,4,3,"红色福地，芒果之乡，山地小城"],
+["贺州",5,3,4,3,"黄姚古镇，长寿之乡，粤湘桂交界"],
+["河池",5,3,4,3,"长寿巴马，山水喀斯特，清净小城"],
+["来宾",5,4,5,4,"桂中小城，红水河畔，安稳过日子"],
+["崇左",5,3,4,3,"德天瀑布，边关风情，甘蔗飘香"],
+["三沙",3,2,2,2,"南海明珠，祖国最南，海岛小城"],
+["儋州",5,3,4,4,"苏东坡流放地，洋浦新秀，热带慢调"],
+["自贡",6,4,5,4,"千年盐都，灯会之城，冷吃兔香"],
+["攀枝花",5,3,5,3,"阳光花城，钒钛之都，冬天暖和"],
+["广元",5,4,5,3,"剑门蜀道，女皇故里，川北门户"],
+["遂宁",5,4,5,4,"观音故里，涪江之畔，安逸小城"],
+["内江",6,4,5,4,"甜城内江，成渝之间，烟火实在"],
+["乐山",6,4,5,4,"大佛脚下，跷脚牛肉，美食小城"],
+["眉山",5,4,5,4,"东坡故里，泡菜之乡，离成都很近"],
+["广安",6,4,5,4,"伟人故里，渠江之畔，川东小城"],
+["达州",7,5,5,4,"川东门户，人口大市，巴人故里"],
+["雅安",4,3,4,2,"雨城雅安，熊猫故乡，茶马古道"],
+["巴中",5,3,4,3,"光雾山红叶，川东北山城，清净慢调"],
+["资阳",5,4,5,5,"柠檬之乡，成渝之间，安稳小城"],
+["六盘水",4,3,4,3,"中国凉都，避暑胜地，山地小城"],
+["安顺",5,3,4,3,"黄果树瀑布，屯堡文化，清凉慢城"],
+["毕节",6,4,4,3,"高原大市，百里杜鹃，山地烟火"],
+["铜仁",5,3,4,3,"梵净山下，黔东门户，山水小城"],
+["玉溪",5,3,5,4,"云烟之乡，抚仙湖畔，宜居小城"],
+["保山",4,3,4,3,"翡翠之城，温泉遍地，滇西慢城"],
+["昭通",6,4,4,3,"苹果之城，滇北门户，山地大市"],
+["普洱",4,2,4,2,"茶马古道，普洱飘香，森林慢城"],
+["临沧",4,2,4,2,"世界佤乡，茶香边陲，清净小城"],
+["日喀则",4,3,3,2,"后藏之心，珠峰脚下，雪域小城"],
+["昌都",4,3,3,2,"三江并流，藏东门户，高原小城"],
+["林芝",3,2,3,2,"西藏江南，桃花盛开，雪山江河"],
+["山南",4,3,3,2,"藏源之城，雅砻河谷，高原慢调"],
+["那曲",3,2,3,2,"藏北草原，天高地阔，高原之城"],
+["铜川",5,4,4,4,"药王故里，煤城转型，安静小城"],
+["延安",5,4,5,3,"革命圣地，黄土风情，红色之城"],
+["安康",4,3,4,3,"汉江之畔，秦巴山间，清净小城"],
+["商洛",4,3,4,3,"秦岭花园，山水小城，离西安很近"],
+["嘉峪关",5,4,4,4,"天下第一雄关，戈壁钢城，小而精致"],
+["金昌",5,4,4,4,"镍都金昌，紫金花城，戈壁小城"],
+["白银",5,4,4,4,"铜城白银，黄河之畔，工业老城"],
+["天水",5,4,5,3,"伏羲故里，麦积山下，麻辣烫出圈"],
+["武威",5,4,4,3,"凉州古城，马踏飞燕，河西走廊"],
+["张掖",4,3,4,2,"七彩丹霞，塞上江南，甘州慢调"],
+["平凉",5,4,4,3,"崆峒山下，苹果飘香，陇东小城"],
+["酒泉",5,4,4,3,"航天之城，敦煌旁，戈壁辽阔"],
+["庆阳",6,4,4,3,"岐黄故里，苹果香包，黄土高原"],
+["定西",5,4,4,3,"马铃薯之都，黄土丘陵，安稳小城"],
+["陇南",4,3,4,2,"陇上江南，山清水秀，白龙江畔"],
+["海东",5,4,4,3,"河湟谷地，青藏门户，高原小城"],
+["石嘴山",5,4,4,4,"塞上煤城，贺兰山下，安稳小城"],
+["吴忠",6,4,5,4,"回乡风情，早茶出名，黄河之畔"],
+["固原",5,3,4,3,"六盘山下，凉爽高原，红色小城"],
+["中卫",5,3,4,3,"沙坡头旁，黄河沙漠，枸杞之乡"],
+["克拉玛依",5,4,5,4,"石油之城，戈壁明珠，富足小城"],
+["吐鲁番",5,3,4,3,"葡萄之乡，火焰山下，甜瓜飘香"],
+["哈密",5,3,4,3,"哈密瓜之乡，东疆门户，大漠小城"]
+];
+
+/* ============ 状态与流程 ============ */
+var answers = []; // 每题选中的分值
+var current = 0;
+
+var elGate = document.getElementById('screen-gate');
+var elHome = document.getElementById('screen-home');
+var elQuiz = document.getElementById('screen-quiz');
+var elResult = document.getElementById('screen-result');
+
+function show(screen){
+  elGate.classList.add('hidden'); elHome.classList.add('hidden'); elQuiz.classList.add('hidden'); elResult.classList.add('hidden');
+  screen.classList.remove('hidden');
+  window.scrollTo(0,0);
+}
+
+/* ============ 验证码 ============ */
+var ACCESS_CODE = "7814";
+var gateInput = document.getElementById('gate-input');
+var gateError = document.getElementById('gate-error');
+var gateCard = document.getElementById('gate-card');
+
+function checkCode(){
+  var val = gateInput.value.replace(/\s/g, "");
+  if(val === ACCESS_CODE){
+    gateError.textContent = "";
+    gateInput.classList.remove('error');
+    show(elHome);
+  } else {
+    gateError.textContent = "验证码不对，请重新输入";
+    gateInput.classList.add('error');
+    gateCard.classList.remove('shake');
+    void gateCard.offsetWidth;
+    gateCard.classList.add('shake');
+    gateInput.value = "";
+    gateInput.focus();
+  }
+}
+document.getElementById('btn-verify').addEventListener('click', checkCode);
+gateInput.addEventListener('keydown', function(e){
+  if(e.key === "Enter"){ checkCode(); }
+});
+gateInput.addEventListener('input', function(){
+  gateInput.value = gateInput.value.replace(/[^\d]/g, "");
+  gateError.textContent = "";
+  gateInput.classList.remove('error');
+});
+
+document.getElementById('btn-start').addEventListener('click', function(){
+  answers = []; current = 0;
+  show(elQuiz); renderQuestion();
+});
+document.getElementById('btn-restart').addEventListener('click', function(){
+  answers = []; current = 0;
+  show(elHome);
+});
+document.getElementById('btn-back').addEventListener('click', function(){
+  if(current > 0){ current--; renderQuestion(); }
+});
+
+function renderQuestion(){
+  var item = QUESTIONS[current];
+  document.getElementById('q-count').textContent = "第 " + (current+1) + " / " + QUESTIONS.length + " 题";
+  document.getElementById('q-dim').textContent = DIM_NAMES[item.dim];
+  document.getElementById('q-bar').style.width = ((current)/QUESTIONS.length*100) + "%";
+  document.getElementById('q-title').textContent = item.q;
+  document.getElementById('btn-back').classList.toggle('hidden', current===0);
+  var box = document.getElementById('q-opts');
+  box.innerHTML = "";
+  var letters = ["A","B","C","D"];
+  item.opts.forEach(function(opt, idx){
+    var btn = document.createElement('button');
+    btn.type = "button"; btn.className = "opt";
+    var l = document.createElement('span'); l.className="letter"; l.textContent = letters[idx];
+    var s = document.createElement('span'); s.textContent = opt.t;
+    btn.appendChild(l); btn.appendChild(s);
+    btn.addEventListener('click', function(){
+      var all = box.querySelectorAll('.opt');
+      for(var i=0;i<all.length;i++) all[i].classList.remove('selected');
+      btn.classList.add('selected');
+      answers[current] = opt.v;
+      setTimeout(function(){
+        document.getElementById('q-bar').style.width = ((current+1)/QUESTIONS.length*100) + "%";
+        if(current < QUESTIONS.length - 1){ current++; renderQuestion(); }
+        else { showResult(); }
+      }, 220);
+    });
+    box.appendChild(btn);
+  });
+}
+
+/* ============ 匹配计算 ============ */
+function userProfile(){
+  var sums=[0,0,0,0], counts=[0,0,0,0];
+  QUESTIONS.forEach(function(q,i){
+    var v = (typeof answers[i]==='number') ? answers[i] : 5;
+    sums[q.dim]+=v; counts[q.dim]++;
+  });
+  return sums.map(function(s,i){ return counts[i]? s/counts[i] : 5; });
+}
+function matchPct(user, city){
+  var totalDiff = 0;
+  for(var d=0; d<4; d++){ totalDiff += Math.abs(user[d]-city[1+d]); }
+  var sim = 1 - (totalDiff/40); // 0~1
+  return Math.round(68 + sim*30); // 68~98
+}
+function rankCities(user){
+  return CITIES.map(function(c){ return {city:c, pct:matchPct(user,c)}; })
+    .sort(function(a,b){ return b.pct-a.pct; });
+}
+
+var REASON_TEMPLATES = [
+  function(u,c){ return u>=6.5 ? "你偏<b>热闹外向</b>，"+c[0]+"的人气和烟火气正对你的胃口，不容易无聊。" : (u<=3.5 ? "你偏<b>安静松弛</b>，"+c[0]+"不吵不挤的氛围，能让你自在做自己。" : "你的性格<b>可动可静</b>，"+c[0]+"热闹与安静兼备，进退都舒服。"); },
+  function(u,c){ return u>=6.5 ? "你喜欢<b>快节奏</b>，"+c[0]+"的效率和便利度跟得上你的步伐。" : (u<=3.5 ? "你向往<b>慢生活</b>，"+c[0]+"不慌不忙的节奏，能把日子过成想要的样子。" : "你要的节奏是<b>张弛有度</b>，"+c[0]+"忙得起来也慢得下来，刚刚好。"); },
+  function(u,c){ return u>=6.5 ? "你对<b>发展机会</b>有追求，"+c[0]+"的空间和成长感托得住你的目标。" : (u<=3.5 ? "你更看重<b>安稳</b>胜过冲刺，"+c[0]+"压力适中，日子踏实有奔头。" : "你想要<b>机会与生活兼顾</b>，"+c[0]+"既有发展空间，也不用拼得太狠。"); },
+  function(u,c){ return u>=6.5 ? "你爱<b>繁华现代</b>的城市气质，"+c[0]+"的活力与新鲜感会让你越住越喜欢。" : (u<=3.5 ? "你偏爱<b>自然与历史</b>的松弛感，"+c[0]+"的底蕴和风光很治愈。" : "你喜欢<b>新旧交融</b>的气质，"+c[0]+"既有现代便利，也有老城味道。"); }
+];
+function cityTags(city){
+  var tags=[];
+  var dims=[[city[1],"热闹同频","安静松弛"],[city[2],"节奏明快","慢生活"],[city[3],"机会多","安稳宜居"],[city[4],"现代繁华","自然人文"]];
+  dims.forEach(function(d){ tags.push(d[0]>=6? d[1]: d[2]); });
+  return tags.slice(0,4);
+}
+
+function showResult(){
+  var user = userProfile();
+  var ranked = rankCities(user);
+  var best = ranked[0];
+  var city = best.city;
+
+  document.getElementById('r-city').textContent = city[0];
+  document.getElementById('r-pct').textContent = best.pct + "%";
+  document.getElementById('r-tagline').textContent = "更懂你，所以更适合你 —— " + city[0] + "，和你的四维画像高度同频。";
+  document.getElementById('r-desc').textContent = city[5] + "。";
+
+  // 匹配度圆环
+  var ring = document.getElementById('ring-fill');
+  var circ = 314;
+  ring.style.strokeDashoffset = String(circ - circ*best.pct/100);
+
+  // 三条理由：取与用户最接近的三个维度
+  var diffs = [0,1,2,3].map(function(d){ return {d:d, diff:Math.abs(user[d]-city[1+d])}; })
+    .sort(function(a,b){ return a.diff-b.diff; }).slice(0,3);
+  // 保持维度顺序展示更自然
+  diffs.sort(function(a,b){ return a.d-b.d; });
+  var rBox = document.getElementById('r-reasons'); rBox.innerHTML="";
+  diffs.forEach(function(x){
+    var div=document.createElement('div'); div.className="reason";
+    div.innerHTML = "<b>" + DIM_NAMES[x.d] + " · </b>" + REASON_TEMPLATES[x.d](user[x.d], city);
+    rBox.appendChild(div);
+  });
+
+  // 标签
+  var tBox=document.getElementById('r-tags'); tBox.innerHTML="";
+  cityTags(city).forEach(function(t){
+    var s=document.createElement('span'); s.className="tag"; s.textContent=t; tBox.appendChild(s);
+  });
+
+  // 四维条
+  var bBox=document.getElementById('r-bars'); bBox.innerHTML="";
+  user.forEach(function(v,d){
+    var row=document.createElement('div'); row.className="bar-row";
+    row.innerHTML = "<span>"+DIM_NAMES[d]+"</span><span class='bar-track'><span class='bar-fill' style='display:block;width:"+(v*10)+"%'></span></span><span>"+v.toFixed(1)+"</span>";
+    bBox.appendChild(row);
+  });
+
+  // 前三名
+  var topBox=document.getElementById('r-top3'); topBox.innerHTML="";
+  ranked.slice(0,3).forEach(function(r,i){
+    var div=document.createElement('div'); div.className="top-item"+(i===0?" first":"");
+    div.innerHTML = "<span class='rank'>"+(i+1)+"</span><span><span class='nm'>"+r.city[0]+"</span><br/><span class='ds'>"+r.city[5]+"</span></span><span class='pc'>"+r.pct+"%</span>";
+    topBox.appendChild(div);
+  });
+
+  show(elResult);
+}
+</script>
+</body>
+</html>
